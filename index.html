@@ -1,1 +1,428 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ASTRO — The Final Destination</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --black: #02020a;
+    --blue: #00d4ff;
+    --blue-dim: #00a8cc;
+    --purple: #7b2fff;
+    --purple-dim: #5a1fcc;
+    --pink: #ff2dce;
+    --glass-bg: rgba(255,255,255,0.04);
+    --glass-border: rgba(0,212,255,0.18);
+    --glow-blue: 0 0 18px rgba(0,212,255,0.55), 0 0 40px rgba(0,212,255,0.2);
+    --glow-purple: 0 0 18px rgba(123,47,255,0.55), 0 0 40px rgba(123,47,255,0.2);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: #e0e8ff;
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  #stars-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  .nebula { position: fixed; border-radius: 50%; filter: blur(110px); pointer-events: none; z-index: 0; animation: nebulaPulse 8s ease-in-out infinite alternate; }
+  .nebula-1 { width: 500px; height: 500px; background: rgba(123,47,255,0.2); top: -120px; left: -80px; animation-delay: 0s; }
+  .nebula-2 { width: 420px; height: 420px; background: rgba(0,212,255,0.15); top: 30%; right: -100px; animation-delay: 3s; }
+  .nebula-3 { width: 380px; height: 380px; background: rgba(255,45,206,0.1); bottom: 10%; left: 20%; animation-delay: 5s; }
+  @keyframes nebulaPulse { from { transform: scale(1); opacity:.7; } to { transform: scale(1.15); opacity:1; } }
+
+  .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+  .mono { font-family: 'Space Mono', monospace; }
+  .gradient-text {
+    background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  /* NAVBAR */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); background: rgba(2,2,10,0.6); border-bottom: 1px solid rgba(0,212,255,0.1); transition: background 0.3s; }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; max-width: 1160px; margin: 0 auto; }
+  .nav-logo { font-size: 1.5rem; font-weight: 800; letter-spacing: .12em; background: linear-gradient(90deg,var(--blue),var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-decoration: none; }
+  .nav-links { display: flex; align-items: center; gap: 36px; list-style: none; }
+  .nav-links a { color: rgba(224,232,255,.65); text-decoration: none; font-size: .88rem; letter-spacing: .06em; font-weight: 600; transition: color .2s; }
+  .nav-links a:hover { color: var(--blue); }
+  .btn-connect { font-family: 'Syne',sans-serif; background: linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; border:none; cursor:pointer; padding:10px 22px; border-radius:8px; font-weight:700; font-size:.85rem; letter-spacing:.07em; box-shadow:var(--glow-blue); transition:transform .2s,box-shadow .2s; }
+  .btn-connect:hover { transform:translateY(-2px); box-shadow:0 0 28px rgba(0,212,255,.7),0 0 60px rgba(123,47,255,.3); }
+  .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; }
+  .hamburger span { display:block; width:24px; height:2px; background:var(--blue); border-radius:2px; transition:.3s; }
+
+  /* HERO */
+  #home { min-height:100vh; display:flex; align-items:center; padding-top:90px; position:relative; }
+  .hero-content { max-width:780px; }
+  .hero-badge { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--glass-border); background:var(--glass-bg); backdrop-filter:blur(8px); border-radius:100px; padding:7px 18px; font-size:.78rem; letter-spacing:.12em; color:var(--blue); margin-bottom:32px; font-weight:700; font-family:'Space Mono',monospace; animation:fadeUp .8s ease both; }
+  .badge-dot { width:7px; height:7px; border-radius:50%; background:var(--blue); animation:blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .hero-title { font-size:clamp(3rem,7vw,6rem); font-weight:800; line-height:1.05; letter-spacing:-.02em; animation:fadeUp .8s .1s ease both; }
+  .hero-sub { margin-top:22px; font-size:clamp(1rem,2vw,1.2rem); color:rgba(224,232,255,.6); line-height:1.7; max-width:580px; animation:fadeUp .8s .2s ease both; }
+  .hero-cta { display:flex; flex-wrap:wrap; gap:16px; margin-top:40px; animation:fadeUp .8s .3s ease both; }
+
+  .btn-primary { font-family:'Syne',sans-serif; display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; text-decoration:none; border:none; cursor:pointer; padding:14px 30px; border-radius:10px; font-weight:700; font-size:.95rem; letter-spacing:.05em; box-shadow:var(--glow-blue); transition:transform .25s,box-shadow .25s; }
+  .btn-primary:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 0 36px rgba(0,212,255,.8),0 0 70px rgba(123,47,255,.35); }
+  .btn-secondary { font-family:'Syne',sans-serif; display:inline-flex; align-items:center; gap:8px; background:transparent; color:var(--blue); text-decoration:none; border:none; cursor:pointer; padding:14px 30px; border-radius:10px; font-weight:700; font-size:.95rem; letter-spacing:.05em; border:1px solid var(--glass-border); backdrop-filter:blur(8px); transition:transform .25s,border-color .25s,background .25s; }
+  .btn-secondary:hover { transform:translateY(-3px); border-color:var(--blue); background:rgba(0,212,255,.07); }
+
+  /* STATS */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-top:60px; animation:fadeUp .8s .4s ease both; }
+  .stat-card { background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(14px); border-radius:14px; padding:22px 24px; position:relative; overflow:hidden; transition:transform .25s,border-color .25s; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--blue),var(--purple)); opacity:.6; }
+  .stat-card:hover { transform:translateY(-4px); border-color:var(--blue); }
+  .stat-label { font-size:.72rem; letter-spacing:.14em; color:rgba(224,232,255,.45); font-family:'Space Mono',monospace; margin-bottom:8px; }
+  .stat-value { font-size:1.6rem; font-weight:800; background:linear-gradient(90deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; }
+  .stat-change { font-size:.78rem; color:#00ff87; margin-top:6px; font-family:'Space Mono',monospace; }
+
+  /* ABOUT */
+  #about { padding:120px 0; }
+  .section-tag { display:inline-block; font-size:.72rem; letter-spacing:.18em; font-family:'Space Mono',monospace; color:var(--blue); border:1px solid var(--glass-border); background:var(--glass-bg); backdrop-filter:blur(8px); padding:6px 16px; border-radius:100px; margin-bottom:20px; }
+  .section-title { font-size:clamp(2rem,4vw,3.2rem); font-weight:800; line-height:1.1; margin-bottom:20px; }
+  .section-body { color:rgba(224,232,255,.6); line-height:1.8; max-width:640px; font-size:1.05rem; }
+  .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+  .about-features { display:flex; flex-direction:column; gap:20px; margin-top:32px; }
+  .feature-item { display:flex; align-items:flex-start; gap:16px; padding:18px 22px; background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(14px); border-radius:12px; transition:transform .25s,border-color .25s; }
+  .feature-item:hover { transform:translateX(6px); border-color:var(--blue); }
+  .feature-icon { font-size:1.5rem; flex-shrink:0; }
+  .feature-title { font-size:.95rem; font-weight:700; color:#fff; margin-bottom:4px; }
+  .feature-desc { font-size:.83rem; color:rgba(224,232,255,.5); line-height:1.6; }
+
+  .about-visual { position:relative; display:flex; align-items:center; justify-content:center; height:400px; }
+  .orbit-ring { position:absolute; border-radius:50%; border:1px solid rgba(0,212,255,.18); animation:spin linear infinite; }
+  .orbit-ring:nth-child(1) { width:300px; height:300px; animation-duration:20s; }
+  .orbit-ring:nth-child(2) { width:220px; height:220px; animation-duration:15s; animation-direction:reverse; border-color:rgba(123,47,255,.2); }
+  .orbit-ring:nth-child(3) { width:150px; height:150px; animation-duration:10s; border-color:rgba(255,45,206,.2); }
+  .orbit-dot { position:absolute; width:10px; height:10px; border-radius:50%; background:var(--blue); box-shadow:var(--glow-blue); top:0; left:50%; transform:translateX(-50%); }
+  .orbit-dot-2 { background:var(--purple); box-shadow:var(--glow-purple); }
+  .astro-logo-big { font-size:2.8rem; font-weight:800; letter-spacing:.1em; background:linear-gradient(135deg,var(--blue),var(--purple),var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; z-index:2; animation:logoPulse 3s ease-in-out infinite; }
+  @keyframes logoPulse { 0%,100%{filter:drop-shadow(0 0 12px rgba(0,212,255,.5))} 50%{filter:drop-shadow(0 0 28px rgba(123,47,255,.8))} }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  /* TOKENOMICS */
+  #tokenomics { padding:120px 0; }
+  .tokenomics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; margin-top:48px; }
+  .token-card { background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(16px); border-radius:16px; padding:32px 28px; position:relative; overflow:hidden; transition:transform .3s,border-color .3s,box-shadow .3s; text-align:center; }
+  .token-card::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%,rgba(0,212,255,.07) 0%,transparent 70%); pointer-events:none; }
+  .token-card:hover { transform:translateY(-6px); border-color:var(--blue); box-shadow:0 20px 60px rgba(0,212,255,.12); }
+  .token-icon { font-size:2.2rem; margin-bottom:12px; }
+  .token-title { font-size:.75rem; letter-spacing:.15em; color:rgba(224,232,255,.45); font-family:'Space Mono',monospace; margin-bottom:10px; text-transform:uppercase; }
+  .token-value { font-size:1.5rem; font-weight:800; color:#fff; line-height:1.2; }
+  .token-sub { font-size:.78rem; color:rgba(224,232,255,.4); margin-top:6px; font-family:'Space Mono',monospace; }
+
+  .ca-box { margin-top:40px; background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(14px); border-radius:14px; padding:24px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .ca-label { font-size:.72rem; letter-spacing:.14em; color:rgba(224,232,255,.45); font-family:'Space Mono',monospace; margin-bottom:6px; }
+  .ca-address { font-family:'Space Mono',monospace; font-size:.82rem; color:var(--blue); word-break:break-all; }
+  .btn-copy { font-family:'Syne',sans-serif; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; border:none; cursor:pointer; padding:10px 20px; border-radius:8px; font-weight:700; font-size:.82rem; letter-spacing:.06em; white-space:nowrap; flex-shrink:0; transition:transform .2s,box-shadow .2s; box-shadow:var(--glow-blue); }
+  .btn-copy:hover { transform:scale(1.05); }
+  .btn-copy.copied { background:linear-gradient(135deg,#00ff87,#00c853); }
+
+  /* ROADMAP */
+  #roadmap { padding:120px 0; }
+  .timeline { position:relative; margin-top:64px; display:flex; flex-direction:column; gap:0; }
+  .timeline::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; background:linear-gradient(180deg,var(--blue),var(--purple),var(--pink)); transform:translateX(-50%); z-index:0; }
+  .timeline-item { display:flex; align-items:center; position:relative; padding:0 0 60px 0; }
+  .timeline-item:nth-child(odd) { flex-direction:row; }
+  .timeline-item:nth-child(even) { flex-direction:row-reverse; }
+  .timeline-card { width:calc(50% - 48px); background:var(--glass-bg); border:1px solid var(--glass-border); backdrop-filter:blur(16px); border-radius:16px; padding:28px 30px; position:relative; z-index:1; transition:transform .3s,border-color .3s; }
+  .timeline-item:nth-child(odd) .timeline-card { margin-right:auto; }
+  .timeline-item:nth-child(even) .timeline-card { margin-left:auto; }
+  .timeline-card:hover { transform:scale(1.02); border-color:var(--blue); }
+  .timeline-node { position:absolute; left:50%; transform:translateX(-50%); width:52px; height:52px; border-radius:50%; background:var(--black); border:2px solid var(--blue); display:flex; align-items:center; justify-content:center; font-size:1.4rem; z-index:2; box-shadow:var(--glow-blue); transition:transform .3s; cursor:default; }
+  .timeline-node:hover { transform:translateX(-50%) scale(1.15); }
+  .phase-tag { font-size:.68rem; letter-spacing:.16em; color:var(--blue); font-family:'Space Mono',monospace; margin-bottom:8px; text-transform:uppercase; }
+  .phase-title { font-size:1.4rem; font-weight:800; color:#fff; margin-bottom:12px; }
+  .phase-items { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .phase-items li { display:flex; align-items:flex-start; gap:10px; font-size:.87rem; color:rgba(224,232,255,.65); line-height:1.5; }
+  .phase-items li::before { content:'▸'; color:var(--blue); flex-shrink:0; margin-top:2px; }
+  .phase-status { display:inline-flex; align-items:center; gap:6px; margin-top:16px; font-size:.72rem; font-family:'Space Mono',monospace; letter-spacing:.1em; }
+  .status-dot { width:6px; height:6px; border-radius:50%; }
+  .status-active .status-dot { background:#00ff87; box-shadow:0 0 8px rgba(0,255,135,.7); animation:blink 1.2s infinite; }
+  .status-pending .status-dot { background:rgba(224,232,255,.3); }
+  .status-future .status-dot { background:var(--purple); box-shadow:0 0 8px rgba(123,47,255,.5); }
+
+  /* FOOTER */
+  footer { border-top:1px solid rgba(0,212,255,.1); padding:48px 0 32px; text-align:center; }
+  .footer-logo { font-size:2rem; font-weight:800; letter-spacing:.12em; background:linear-gradient(90deg,var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+  .footer-tagline { color:rgba(224,232,255,.35); font-size:.82rem; font-family:'Space Mono',monospace; letter-spacing:.1em; margin-bottom:24px; }
+  .footer-links { display:flex; justify-content:center; gap:32px; flex-wrap:wrap; margin-bottom:28px; }
+  .footer-links a { color:rgba(224,232,255,.45); text-decoration:none; font-size:.85rem; letter-spacing:.06em; transition:color .2s; }
+  .footer-links a:hover { color:var(--blue); }
+  .footer-copy { font-size:.75rem; color:rgba(224,232,255,.2); font-family:'Space Mono',monospace; }
+  .footer-disclaimer { font-size:.72rem; color:rgba(224,232,255,.18); margin-top:10px; font-family:'Space Mono',monospace; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.6; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease,transform .7s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  @media(max-width:900px){
+    .about-grid{grid-template-columns:1fr}
+    .about-visual{display:none}
+    .timeline::before{left:24px}
+    .timeline-item,.timeline-item:nth-child(even){flex-direction:column;align-items:flex-start;padding-left:64px}
+    .timeline-card,.timeline-item:nth-child(even) .timeline-card,.timeline-item:nth-child(odd) .timeline-card{width:100%;margin:0}
+    .timeline-node{left:24px;top:0;position:absolute;transform:none}
+    .timeline-node:hover{transform:scale(1.15)}
+  }
+  @media(max-width:640px){
+    .nav-links{display:none;flex-direction:column;position:absolute;top:70px;left:0;right:0;background:rgba(2,2,10,.97);border-bottom:1px solid rgba(0,212,255,.1);padding:20px;gap:20px}
+    .nav-links.open{display:flex}
+    .hamburger{display:flex}
+    .stats-grid{grid-template-columns:1fr 1fr}
+    .hero-cta{flex-direction:column}
+    .btn-primary,.btn-secondary{justify-content:center}
+    .ca-box{flex-direction:column;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
+<canvas id="stars-canvas"></canvas>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-inner">
+    <a href="#home" class="nav-logo">⚡ ASTRO</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#tokenomics">Tokenomics</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button class="btn-connect" onclick="alert('Wallet connector coming soon!')">Connect Wallet</button>
+      <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="home">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge"><span class="badge-dot"></span>🚀 NOW LIVE ON SOLANA</div>
+      <h1 class="hero-title">ASTRO:<br/><span class="gradient-text">The Final Destination.</span></h1>
+      <p class="hero-sub">While everyone shouts "I'm out," we're launching to the moon. The first crypto fueled by the courage of exploration — for those who dare to go further than the rest.</p>
+      <div class="hero-cta">
+        <a href="#" class="btn-primary"><span>🪐</span> Buy on Raydium</a>
+        <a href="#" class="btn-secondary"><span>📈</span> View Chart</a>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">MARKET CAP</div>
+          <div class="stat-value">$4.2M</div>
+          <div class="stat-change">▲ +18.4%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">HOLDERS</div>
+          <div class="stat-value">12,480</div>
+          <div class="stat-change">▲ +340 today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">LIQUIDITY</div>
+          <div class="stat-value">$860K</div>
+          <div class="stat-change mono" style="color:var(--blue)">🔥 BURNED</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">PRICE</div>
+          <div class="stat-value">$0.0042</div>
+          <div class="stat-change">▲ +22.1%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div>
+        <div class="section-tag reveal">// WHO WE ARE</div>
+        <h2 class="section-title reveal">Built for <span class="gradient-text">Explorers,</span><br/>Not Spectators.</h2>
+        <p class="section-body reveal">ASTRO is more than a memecoin — it's a movement. Inspired by humanity's relentless drive to push past every boundary, ASTRO rewards the bold, the early, and the fearless. Community-first, hype-free, built to last.</p>
+        <div class="about-features">
+          <div class="feature-item reveal">
+            <div class="feature-icon">🛡️</div>
+            <div><div class="feature-title">Fully Decentralized</div><div class="feature-desc">No team wallets. No VCs. Power stays in the hands of the community, always.</div></div>
+          </div>
+          <div class="feature-item reveal">
+            <div class="feature-icon">🔥</div>
+            <div><div class="feature-title">Liquidity Burned</div><div class="feature-desc">LP tokens permanently burned, making your investment safer and rug-proof.</div></div>
+          </div>
+          <div class="feature-item reveal">
+            <div class="feature-icon">⚡</div>
+            <div><div class="feature-title">Zero Tax</div><div class="feature-desc">Buy and sell with 0% tax. Every token you own is yours — no hidden cuts.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="orbit-ring"><div class="orbit-dot"></div></div>
+        <div class="orbit-ring"><div class="orbit-dot orbit-dot-2" style="top:auto;bottom:0;"></div></div>
+        <div class="orbit-ring"></div>
+        <div class="astro-logo-big">$ASTRO</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOKENOMICS -->
+<section id="tokenomics">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-tag reveal">// TOKENOMICS</div>
+      <h2 class="section-title reveal" style="max-width:600px;margin:0 auto 12px">Clean. Simple.<br/><span class="gradient-text">Transparent.</span></h2>
+      <p class="section-body reveal" style="margin:0 auto;text-align:center">No tricks. No traps. Just a fair-launch token built for the community.</p>
+    </div>
+    <div class="tokenomics-grid">
+      <div class="token-card reveal"><div class="token-icon">💎</div><div class="token-title">Total Supply</div><div class="token-value">1,000,000,000</div><div class="token-sub">$ASTRO</div></div>
+      <div class="token-card reveal"><div class="token-icon">✅</div><div class="token-title">Buy / Sell Tax</div><div class="token-value">0% / 0%</div><div class="token-sub">No tax. Ever.</div></div>
+      <div class="token-card reveal"><div class="token-icon">🔥</div><div class="token-title">Liquidity</div><div class="token-value">BURNED</div><div class="token-sub">LP permanently locked</div></div>
+      <div class="token-card reveal"><div class="token-icon">🌍</div><div class="token-title">Ownership</div><div class="token-value">RENOUNCED</div><div class="token-sub">Contract renounced</div></div>
+    </div>
+    <div class="ca-box reveal">
+      <div>
+        <div class="ca-label">CONTRACT ADDRESS (CA)</div>
+        <div class="ca-address" id="caAddr">ASTRo1111111111111111111111111111111111111111</div>
+      </div>
+      <button class="btn-copy" id="copyBtn" onclick="copyCA()">📋 Copy CA</button>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div style="text-align:center">
+      <div class="section-tag reveal">// ROADMAP</div>
+      <h2 class="section-title reveal" style="max-width:560px;margin:0 auto 12px">Mission <span class="gradient-text">Timeline</span></h2>
+      <p class="section-body reveal" style="margin:0 auto;text-align:center">Three phases. One destination: the moon.</p>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item reveal">
+        <div class="timeline-node">🚀</div>
+        <div class="timeline-card">
+          <div class="phase-tag">PHASE 1</div>
+          <div class="phase-title">Lift Off</div>
+          <ul class="phase-items">
+            <li>Fair launch on Raydium with locked liquidity</li>
+            <li>Community-driven token deployment on Solana</li>
+            <li>CoinGecko &amp; CoinMarketCap listing submissions</li>
+            <li>First 1,000 holders milestone</li>
+            <li>Official social media channels launch</li>
+          </ul>
+          <div class="phase-status status-active"><div class="status-dot"></div><span style="color:#00ff87">IN PROGRESS</span></div>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-node" style="border-color:var(--purple);box-shadow:var(--glow-purple)">🌌</div>
+        <div class="timeline-card">
+          <div class="phase-tag" style="color:var(--purple)">PHASE 2</div>
+          <div class="phase-title">Orbit</div>
+          <ul class="phase-items">
+            <li>CEX listing negotiations (Tier-2 exchanges)</li>
+            <li>10,000 holders milestone</li>
+            <li>Community governance &amp; voting portal</li>
+            <li>ASTRO NFT collection airdrop for top holders</li>
+            <li>Partnerships with major Solana projects</li>
+          </ul>
+          <div class="phase-status status-pending"><div class="status-dot"></div><span style="color:rgba(224,232,255,.4)">UPCOMING</span></div>
+        </div>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-node" style="border-color:var(--pink);box-shadow:0 0 18px rgba(255,45,206,.55)">🌕</div>
+        <div class="timeline-card">
+          <div class="phase-tag" style="color:var(--pink)">PHASE 3</div>
+          <div class="phase-title">Moon Landing</div>
+          <ul class="phase-items">
+            <li>Major Tier-1 CEX listing (Binance / OKX / Bybit)</li>
+            <li>100,000 holders community reached</li>
+            <li>ASTRO DeFi ecosystem: staking &amp; yield tools</li>
+            <li>Global brand ambassador campaign</li>
+            <li>$100M market cap target — destination: MOON 🌕</li>
+          </ul>
+          <div class="phase-status status-future"><div class="status-dot"></div><span style="color:var(--purple)">FUTURE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">⚡ ASTRO</div>
+    <div class="footer-tagline">THE FINAL DESTINATION</div>
+    <div class="footer-links">
+      <a href="#">Twitter / X</a>
+      <a href="#">Telegram</a>
+      <a href="#">Discord</a>
+      <a href="#">DEX Screener</a>
+      <a href="#">Raydium</a>
+    </div>
+    <div class="footer-copy">© 2025 ASTRO Token. All rights reserved.</div>
+    <div class="footer-disclaimer">⚠️ ASTRO is a memecoin created for entertainment purposes. Crypto investing involves risk. Never invest more than you can afford to lose. This is not financial advice.</div>
+  </div>
+</footer>
+
+<script>
+/* STAR PARTICLES */
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+function createStars(n){
+  stars=[];
+  for(let i=0;i<n;i++) stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.4+0.3,speed:Math.random()*0.15+0.03,alpha:Math.random(),dAlpha:(Math.random()-.5)*0.008});
+}
+createStars(220);
+function animateStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    s.y+=s.speed; if(s.y>canvas.height){s.y=0;s.x=Math.random()*canvas.width;}
+    s.alpha+=s.dAlpha; if(s.alpha<=0||s.alpha>=1) s.dAlpha*=-1;
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(180,210,255,${Math.max(0,Math.min(1,s.alpha))})`; ctx.fill();
+  });
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+/* SCROLL REVEAL */
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i*80); });
+},{threshold:0.1});
+reveals.forEach(el=>observer.observe(el));
+
+/* COPY CA */
+function copyCA(){
+  const addr = document.getElementById('caAddr').innerText;
+  navigator.clipboard.writeText(addr).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent='✅ Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy CA';btn.classList.remove('copied');},2000);
+  });
+}
+
+/* HAMBURGER */
+function toggleMenu(){ document.getElementById('navLinks').classList.toggle('open'); }
+
+/* NAVBAR SCROLL */
+window.addEventListener('scroll',()=>{
+  document.querySelector('nav').style.background = window.scrollY>40?'rgba(2,2,10,0.92)':'rgba(2,2,10,0.6)';
+});
+</script>
+</body>
+</html>
